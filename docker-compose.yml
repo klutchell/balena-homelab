@@ -1,0 +1,112 @@
+version: '2.1'
+
+services:
+
+    # https://hub.docker.com/_/nextcloud/
+    nextcloud:
+        image: nextcloud
+        volumes:
+            - 'nextcloud:/var/www/html'
+        labels:
+            traefik.enable: true
+            traefik.http.routers.nextcloud.entrypoints: https
+            traefik.http.routers.nextcloud.tls.certresolver: cloudflare
+            traefik.http.routers.nextcloud.middlewares: secureheaders, cardcaldav
+            traefik.http.middlewares.cardcaldav.replacepathregex.regex: ^/.well-known/(card|cal)dav
+            traefik.http.middlewares.cardcaldav.replacepathregex.replacement: /remote.php/dav/
+            customLabel: nextcloud
+    
+    # https://hub.docker.com/_/traefik/
+    traefik:
+        image: traefik
+        ports:
+            - '80:80/tcp'
+            - '443:443/tcp'
+        volumes:
+            - 'traefik:/etc/traefik'
+        environment:
+            TRAEFIK_LOG_LEVEL: INFO
+            TRAEFIK_API: true
+            TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE: false
+            TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS: :80
+            TRAEFIK_ENTRYPOINTS_HTTPS_ADDRESS: :443
+            TRAEFIK_PROVIDERS_DOCKER: true
+            TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: false
+            TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: unix:///var/run/balena.sock
+            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE: true
+            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE_PROVIDER: cloudflare
+            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_STORAGE: /etc/traefik/acme.json
+            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER: https://acme-staging-v02.api.letsencrypt.org/directory
+        labels:
+            io.balena.features.balena-socket: true
+            traefik.enable: true
+            traefik.http.routers.traefik.entrypoints: https
+            traefik.http.routers.traefik.tls.certresolver: cloudflare
+            traefik.http.routers.traefik.middlewares: secureheaders, basicauth
+            traefik.http.routers.traefik.service: api@internal
+            traefik.http.routers.http.entrypoints: http
+            traefik.http.routers.http.rule: HostRegexp(`traefik.{domain:.+}`,`raneto.{domain:.+}`,`smokeping.{domain:.+}`,`nextcloud.{domain:.+}`,`whoami.{domain:.+}`)
+            traefik.http.routers.http.middlewares: redirectscheme
+            traefik.http.middlewares.redirectscheme.redirectscheme.scheme: https
+            traefik.http.middlewares.basicauth.basicauth.usersfile: /etc/traefik/.htpasswd
+            traefik.http.middlewares.secureheaders.headers.stsSeconds: 15552000
+            traefik.http.middlewares.secureheaders.headers.framedeny: true
+            traefik.http.middlewares.secureheaders.headers.sslForceHost: true
+            traefik.http.middlewares.secureheaders.headers.sslRedirect: true
+            traefik.http.middlewares.secureheaders.headers.stsIncludeSubdomains: true
+            traefik.http.middlewares.secureheaders.headers.browserXssFilter: true
+            traefik.http.middlewares.secureheaders.headers.contentTypeNosniff: true
+            traefik.http.middlewares.secureheaders.headers.forceSTSHeader: true
+            traefik.http.middlewares.secureheaders.headers.stsPreload: true
+            traefik.http.middlewares.secureheaders.headers.customResponseHeaders.X-Robots-Tag: none
+            traefik.http.middlewares.secureheaders.headers.customFrameOptionsValue: SAMEORIGIN
+            customLabel: traefik
+
+    # https://hub.docker.com/_/mariadb/
+    mariadb:
+        image: mariadb
+        volumes:
+            - 'mariadb:/var/lib/mysql'
+        environment:
+            MYSQL_RANDOM_ROOT_PASSWORD: yes
+    
+    # https://hub.docker.com/r/linuxserver/raneto
+    raneto:
+        image: linuxserver/raneto
+        volumes:
+            - 'raneto:/config'
+        labels:
+            traefik.enable: true
+            traefik.http.routers.raneto.entrypoints: https
+            traefik.http.routers.raneto.tls.certresolver: cloudflare
+            traefik.http.routers.raneto.middlewares: secureheaders, basicauth
+            customLabel: raneto
+
+    # https://hub.docker.com/r/linuxserver/smokeping
+    smokeping:
+        image: linuxserver/smokeping
+        volumes:
+            - 'smokeping:/config'
+        labels:
+            traefik.enable: true
+            traefik.http.routers.smokeping.entrypoints: https
+            traefik.http.routers.smokeping.tls.certresolver: cloudflare
+            traefik.http.routers.smokeping.middlewares: secureheaders, basicauth
+            customLabel: smokeping
+
+    # https://hub.docker.com/r/containous/whoami/
+    whoami:
+        image: containous/whoami
+        labels:
+            traefik.enable: true
+            traefik.http.routers.whoami.entrypoints: https
+            traefik.http.routers.whoami.tls.certresolver: cloudflare
+            traefik.http.routers.whoami.middlewares: secureheaders, basicauth
+            customLabel: whoami
+
+volumes:
+    nextcloud:
+    mariadb:
+    traefik:
+    raneto:
+    smokeping:
