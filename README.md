@@ -31,7 +31,7 @@ Application envionment variables apply to all services within the application, a
 |`TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL`|`foo@bar.com`|(required) email address for ACME registration|
 |`TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE`|``Host(`{{index .Labels "customLabel"}}.mydomain.com`)``|(required) replace `mydomain.com` with your domain managed by cloudflare|
 |`TRAEFIK_LOG_LEVEL`|`DEBUG`|(optional) log level for traefik|
-|`TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER`|`https://acme-v02.api.letsencrypt.org/directory`|(optional) specify a different CA server to use|
+|`TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER`|`https://acme-staging-v02.api.letsencrypt.org/directory`|(optional) specify a different CA server to use|
 
 ## Usage
 
