@@ -41,7 +41,7 @@ Connect to the traefik service and run the following:
 
 ```bash
 apk add --no-cache apache2-utils
-htpasswd /etc/traefik/.htpasswd <username>
+htpasswd -c /etc/traefik/.htpasswd <username>
 ```
 
 ## Contributing

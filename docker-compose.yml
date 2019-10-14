@@ -4,7 +4,7 @@ services:
 
     # https://hub.docker.com/_/nextcloud/
     nextcloud:
-        image: nextcloud
+        image: nextcloud:17.0.0-apache
         volumes:
             - 'nextcloud:/var/www/html'
         labels:
@@ -18,7 +18,7 @@ services:
     
     # https://hub.docker.com/_/traefik/
     traefik:
-        image: traefik
+        image: traefik:v2.0.2
         ports:
             - '80:80/tcp'
             - '443:443/tcp'
@@ -63,7 +63,7 @@ services:
 
     # https://hub.docker.com/_/mariadb/
     mariadb:
-        image: mariadb
+        image: mariadb:10.4.8-bionic
         volumes:
             - 'mariadb:/var/lib/mysql'
         environment:
