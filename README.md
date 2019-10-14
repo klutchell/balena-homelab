@@ -1,7 +1,13 @@
 # balena-homelab
 
+WORK IN PROGRESS - DO NOT USE
+
 This project is a [balenaCloud](https://www.balena.io/cloud) stack with the following services:
 
+* [Pihole](https://hub.docker.com/r/pihole/pihole)
+* [Unbound](https://hub.docker.com/r/klutchell/unbound)
+* [Cloudflared](https://hub.docker.com/r/klutchell/cloudflared)
+* [DNSCrypt-proxy](https://hub.docker.com/r/klutchell/dnscrypt-proxy)
 * [Traefik](https://hub.docker.com/_/traefik/)
 * [Nextcloud](https://hub.docker.com/_/nextcloud/)
 * [Smokeping](https://hub.docker.com/r/linuxserver/smokeping)
@@ -29,9 +35,9 @@ Application envionment variables apply to all services within the application, a
 |`CF_API_EMAIL`|`foo@bar.com`|(required) cloudflare account email|
 |`CF_API_KEY`|`b9841238feb177a84330febba8a83208921177bffe733`|(required) cloudflare global API key|
 |`TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL`|`foo@bar.com`|(required) email address for ACME registration|
-|`TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE`|``Host(`{{index .Labels "customLabel"}}.mydomain.com`)``|(required) replace `mydomain.com` with your domain managed by cloudflare|
 |`TRAEFIK_LOG_LEVEL`|`DEBUG`|(optional) log level for traefik|
 |`TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER`|`https://acme-staging-v02.api.letsencrypt.org/directory`|(optional) specify a different CA server to use|
+|`WEBPASSWORD`|`mysecretpassword`|(optional) password for accessing the web-based interface of Pi-hole|
 
 ## Usage
 
