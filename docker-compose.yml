@@ -12,6 +12,7 @@ services:
             traefik.http.routers.nextcloud.entrypoints: https
             traefik.http.routers.nextcloud.tls.certresolver: cloudflare
             traefik.http.routers.nextcloud.middlewares: secureheaders, cardcaldav
+            traefik.http.routers.nextcloud.priority: 1
             traefik.http.middlewares.cardcaldav.replacepathregex.regex: ^/.well-known/(card|cal)dav
             traefik.http.middlewares.cardcaldav.replacepathregex.replacement: /remote.php/dav/
             customLabel: nextcloud
@@ -43,9 +44,11 @@ services:
             traefik.http.routers.traefik.tls.certresolver: cloudflare
             traefik.http.routers.traefik.middlewares: secureheaders, basicauth
             traefik.http.routers.traefik.service: api@internal
+            traefik.http.routers.traefik.priority: 1
             traefik.http.routers.http.entrypoints: http
-            traefik.http.routers.http.rule: HostRegexp(`traefik.{domain:.+}`,`raneto.{domain:.+}`,`smokeping.{domain:.+}`,`nextcloud.{domain:.+}`,`whoami.{domain:.+}`)
+            traefik.http.routers.http.rule: HostRegexp(`{catchall:.*}`)
             traefik.http.routers.http.middlewares: redirectscheme
+            traefik.http.routers.http.priority: 1
             traefik.http.middlewares.redirectscheme.redirectscheme.scheme: https
             traefik.http.middlewares.basicauth.basicauth.usersfile: /etc/traefik/.htpasswd
             traefik.http.middlewares.secureheaders.headers.stsSeconds: 15552000
@@ -79,6 +82,7 @@ services:
             traefik.http.routers.raneto.entrypoints: https
             traefik.http.routers.raneto.tls.certresolver: cloudflare
             traefik.http.routers.raneto.middlewares: secureheaders, basicauth
+            traefik.http.routers.raneto.priority: 1
             customLabel: raneto
 
     # https://hub.docker.com/r/linuxserver/smokeping
@@ -91,6 +95,7 @@ services:
             traefik.http.routers.smokeping.entrypoints: https
             traefik.http.routers.smokeping.tls.certresolver: cloudflare
             traefik.http.routers.smokeping.middlewares: secureheaders, basicauth
+            traefik.http.routers.smokeping.priority: 1
             customLabel: smokeping
 
     # https://hub.docker.com/r/containous/whoami/
@@ -101,6 +106,7 @@ services:
             traefik.http.routers.whoami.entrypoints: https
             traefik.http.routers.whoami.tls.certresolver: cloudflare
             traefik.http.routers.whoami.middlewares: secureheaders, basicauth
+            traefik.http.routers.whoami.priority: 1
             customLabel: whoami
 
 volumes:
