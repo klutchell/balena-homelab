@@ -1,31 +1,6 @@
 version: '2.1'
 
 services:
-
-    # https://hub.docker.com/r/pihole/pihole
-    pihole:
-        image: pihole/pihole:4.3.2-1_aarch64
-        volumes:
-            - 'pihole:/etc/pihole'
-            - 'dnsmasq:/etc/dnsmasq.d'
-        dns:
-            - '127.0.0.1'
-            - '1.1.1.1'
-        labels:
-            traefik.enable: true
-            traefik.tcp.routers.pihole.entrypoints: dns, dhcp
-            traefik.tcp.routers.pihole.rule: HostSNI(`*`)
-            traefik.udp.routers.pihole.entrypoints: dns
-            traefik.udp.routers.pihole.rule: HostSNI(`*`)
-            traefik.http.routers.pihole.entrypoints: https
-            traefik.http.routers.pihole.tls.certresolver: cloudflare
-            traefik.http.routers.pihole.middlewares: secureheaders
-            traefik.http.routers.pihole.rule: HostRegexp(`{catchall:.+}`)
-            traefik.http.routers.pihole.priority: 1
-        links:
-            - unbound
-            - cloudflared
-            - dnscrypt-proxy
     
     # https://hub.docker.com/r/linuxserver/raneto
     raneto:
@@ -37,7 +12,7 @@ services:
             traefik.http.routers.raneto.entrypoints: https
             traefik.http.routers.raneto.tls.certresolver: cloudflare
             traefik.http.routers.raneto.middlewares: secureheaders, basicauth
-            traefik.http.routers.raneto.rule: HostRegexp(`raneto.{domain:.+}`)
+            subdomain: raneto
 
     # https://hub.docker.com/r/linuxserver/smokeping
     smokeping:
@@ -49,7 +24,7 @@ services:
             traefik.http.routers.smokeping.entrypoints: https
             traefik.http.routers.smokeping.tls.certresolver: cloudflare
             traefik.http.routers.smokeping.middlewares: secureheaders, basicauth
-            traefik.http.routers.smokeping.rule: HostRegexp(`smokeping.{domain:.+}`)
+            subdomain: smokeping
 
     # https://hub.docker.com/r/containous/whoami/
     whoami:
@@ -59,8 +34,23 @@ services:
             traefik.http.routers.whoami.entrypoints: https
             traefik.http.routers.whoami.tls.certresolver: cloudflare
             traefik.http.routers.whoami.middlewares: secureheaders, basicauth
-            traefik.http.routers.whoami.rule: HostRegexp(`whoami.{domain:.+}`)
-    
+            subdomain: whoami
+ 
+    # https://hub.docker.com/r/linuxserver/duplicati
+    duplicati:
+        image: linuxserver/duplicati
+        container_name: duplicati
+        volumes:
+            - 'duplicati:/config:rw'
+            - 'raneto:/source/raneto:ro'
+            - 'smokeping:/source/smokeping:ro'
+        labels:
+            traefik.enable: true
+            traefik.http.routers.duplicati.entrypoints: https
+            traefik.http.routers.duplicati.tls.certresolver: cloudflare
+            traefik.http.routers.duplicati.middlewares: secureheaders, basicauth
+            subdomain: duplicati
+
     # https://hub.docker.com/_/traefik/
     traefik:
         image: traefik:v2.0.2
@@ -90,7 +80,6 @@ services:
             traefik.http.routers.traefik.tls.certresolver: cloudflare
             traefik.http.routers.traefik.middlewares: secureheaders, basicauth
             traefik.http.routers.traefik.service: api@internal
-            traefik.http.routers.traefik.rule: HostRegexp(`traefik.{domain:.+}`)
             traefik.http.routers.http.entrypoints: http
             traefik.http.routers.http.rule: HostRegexp(`{catchall:.+}`)
             traefik.http.routers.http.middlewares: redirectscheme
@@ -107,27 +96,23 @@ services:
             traefik.http.middlewares.secureheaders.headers.stsPreload: true
             traefik.http.middlewares.secureheaders.headers.customResponseHeaders.X-Robots-Tag: none
             traefik.http.middlewares.secureheaders.headers.customFrameOptionsValue: SAMEORIGIN
-
-    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5053 to use unbound for upstream DNS
-    # unbound:
-    #     image: klutchell/unbound:arm64v8-1.9.3
-    #     ports:
-    #         - '5053:5053/tcp'
-    #         - '5053:5053/udp'
-
-    # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5153 to use cloudflared for upstream DNS
-    cloudflared:
-        image: klutchell/cloudflared:arm64v8-2019.9.1
-        ports:
-            - '5153:5053/tcp'
-            - '5153:5053/udp'
-
-    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5253 to use dnscrypt-proxy for upstream DNS
-    # dnscrypt-proxy:
-    #     image: klutchell/dnscrypt-proxy:arm64v8-2.0.28
-    #     ports:
-    #         - '5253:5053/tcp'
-    #         - '5253:5053/udp'
+            subdomain: traefik
+    
+    # # https://hub.docker.com/r/pihole/pihole
+    # pihole:
+    #     image: pihole/pihole:4.3.2-1_aarch64
+    #     volumes:
+    #         - 'pihole:/etc/pihole'
+    #         - 'dnsmasq:/etc/dnsmasq.d'
+    #     dns:
+    #         - '127.0.0.1'
+    #         - '1.1.1.1'
+    #     labels:
+    #         traefik.enable: true
+    #         traefik.tcp.routers.pihole.entrypoints: http, dns, dhcp
+    #         traefik.tcp.routers.pihole.rule: HostSNI(`*`)
+    #         traefik.udp.routers.pihole.entrypoints: dns
+    #         traefik.udp.routers.pihole.rule: HostSNI(`*`)
 
     # # https://hub.docker.com/_/nextcloud/
     # nextcloud:
@@ -139,9 +124,9 @@ services:
     #         traefik.http.routers.nextcloud.entrypoints: https
     #         traefik.http.routers.nextcloud.tls.certresolver: cloudflare
     #         traefik.http.routers.nextcloud.middlewares: secureheaders, cardcaldav
-    #         traefik.http.routers.nextcloud.rule: HostRegexp(`nextcloud.{domain:.+}`)
     #         traefik.http.middlewares.cardcaldav.replacepathregex.regex: ^/.well-known/(card|cal)dav
     #         traefik.http.middlewares.cardcaldav.replacepathregex.replacement: /remote.php/dav/
+    #         subdomain: nextcloud
 
     # # https://hub.docker.com/_/mariadb/
     # mariadb:
@@ -151,11 +136,33 @@ services:
     #     environment:
     #         MYSQL_RANDOM_ROOT_PASSWORD: yes
 
+    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5053 to use unbound for upstream DNS
+    # unbound:
+    #     image: klutchell/unbound:arm64v8-1.9.3
+    #     ports:
+    #         - '5053:5053/tcp'
+    #         - '5053:5053/udp'
+
+    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5153 to use cloudflared for upstream DNS
+    # cloudflared:
+    #     image: klutchell/cloudflared:arm64v8-2019.9.1
+    #     ports:
+    #         - '5153:5053/tcp'
+    #         - '5153:5053/udp'
+
+    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5253 to use dnscrypt-proxy for upstream DNS
+    # dnscrypt-proxy:
+    #     image: klutchell/dnscrypt-proxy:arm64v8-2.0.28
+    #     ports:
+    #         - '5253:5053/tcp'
+    #         - '5253:5053/udp'
+
 volumes:
-    # nextcloud:
-    # mariadb:
-    traefik:
+    duplicati:
     raneto:
     smokeping:
-    pihole:
-    dnsmasq:
+    traefik:
+    # pihole:
+    # dnsmasq:
+    # nextcloud:
+    # mariadb:
