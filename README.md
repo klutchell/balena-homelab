@@ -35,7 +35,7 @@ Application envionment variables apply to all services within the application, a
 - `CF_API_KEY` - (required) cloudflare global API key (eg. `b9841238feb177a84330febba8a83208921177bffe733`)
 - `TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL` - (required) email address for ACME registration (eg. `foo@bar.com`)
 - `TRAEFIK_LOG_LEVEL` - (optional) log level for traefik (eg. `DEBUG`)
-- `TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER` - (optional) specify a different CA server to use (eg. `https://acme-staging-v02.api.letsencrypt.org/directory`)
+- `TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER` - (optional) specify a different CA server to use (eg. `https://acme-v02.api.letsencrypt.org/directory`)
 - `TRAEFIK_PROVIDERS_DOCKER_DEFAULTRULE` - (required) Replace mydomain.com with your domain managed by Cloudflare (eg. ``Host(`{{index .Labels "subdomain"}}.mydomain.com`)``)
 - ~~`WEBPASSWORD` - (optional) password for accessing the web-based interface of Pi-hole (eg. `mysecretpassword`)~~
 

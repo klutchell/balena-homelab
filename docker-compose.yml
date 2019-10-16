@@ -73,6 +73,7 @@ services:
             TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE: true
             TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE_PROVIDER: cloudflare
             TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_STORAGE: /etc/traefik/acme.json
+            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER: https://acme-staging-v02.api.letsencrypt.org/directory
         labels:
             io.balena.features.balena-socket: true
             traefik.enable: true
