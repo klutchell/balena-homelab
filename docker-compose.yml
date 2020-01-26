@@ -4,56 +4,59 @@ services:
     
     # https://hub.docker.com/r/linuxserver/raneto
     raneto:
-        image: linuxserver/raneto
+        image: linuxserver/raneto:latest
         volumes:
             - 'raneto:/config'
         labels:
             traefik.enable: true
             traefik.http.routers.raneto.entrypoints: https
-            traefik.http.routers.raneto.tls.certresolver: cloudflare
+            traefik.http.routers.raneto.tls.certresolver: tlschallenge
             traefik.http.routers.raneto.middlewares: secureheaders, basicauth
             subdomain: raneto
 
     # https://hub.docker.com/r/linuxserver/smokeping
     smokeping:
-        image: linuxserver/smokeping
+        image: linuxserver/smokeping:latest
         volumes:
             - 'smokeping:/config'
         labels:
             traefik.enable: true
             traefik.http.routers.smokeping.entrypoints: https
-            traefik.http.routers.smokeping.tls.certresolver: cloudflare
+            traefik.http.routers.smokeping.tls.certresolver: tlschallenge
             traefik.http.routers.smokeping.middlewares: secureheaders, basicauth
             subdomain: smokeping
 
-    # https://hub.docker.com/r/containous/whoami/
-    whoami:
-        image: containous/whoami
+    # https://hub.docker.com/_/ghost/
+    ghost:
+        image: ghost:latest
+        volumes:
+            - 'ghost:/var/lib/ghost/content:rw'
         labels:
             traefik.enable: true
-            traefik.http.routers.whoami.entrypoints: https
-            traefik.http.routers.whoami.tls.certresolver: cloudflare
-            traefik.http.routers.whoami.middlewares: secureheaders, basicauth
-            subdomain: whoami
- 
+            traefik.http.routers.ghost.entrypoints: https
+            traefik.http.routers.ghost.tls.certresolver: tlschallenge
+            traefik.http.routers.ghost.middlewares: secureheaders, basicauth
+            subdomain: ghost
+
     # https://hub.docker.com/r/linuxserver/duplicati
     duplicati:
-        image: linuxserver/duplicati
+        image: linuxserver/duplicati:latest
         container_name: duplicati
         volumes:
             - 'duplicati:/config:rw'
             - 'raneto:/source/raneto:ro'
             - 'smokeping:/source/smokeping:ro'
+            - 'ghost:/source/ghost:ro'
         labels:
             traefik.enable: true
             traefik.http.routers.duplicati.entrypoints: https
-            traefik.http.routers.duplicati.tls.certresolver: cloudflare
+            traefik.http.routers.duplicati.tls.certresolver: tlschallenge
             traefik.http.routers.duplicati.middlewares: secureheaders, basicauth
             subdomain: duplicati
 
     # https://hub.docker.com/_/traefik/
     traefik:
-        image: traefik:v2.0.2
+        image: traefik:latest
         ports:
             - '80:80/tcp'
             - '443:443/tcp'
@@ -65,20 +68,17 @@ services:
             TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE: false
             TRAEFIK_ENTRYPOINTS_HTTP_ADDRESS: :80
             TRAEFIK_ENTRYPOINTS_HTTPS_ADDRESS: :443
-            TRAEFIK_ENTRYPOINTS_DNS_ADDRESS: :53
-            TRAEFIK_ENTRYPOINTS_DHCP_ADDRESS: :67
             TRAEFIK_PROVIDERS_DOCKER: true
             TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: false
             TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: unix:///var/run/balena.sock
-            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE: true
-            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE_PROVIDER: cloudflare
-            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_STORAGE: /etc/traefik/acme.json
-            TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_CASERVER: https://acme-staging-v02.api.letsencrypt.org/directory
+            TRAEFIK_CERTIFICATESRESOLVERS_TLSCHALLENGE_ACME_TLSCHALLENGE: true
+            TRAEFIK_CERTIFICATESRESOLVERS_TLSCHALLENGE_ACME_STORAGE: /etc/traefik/acme.json
+            # TRAEFIK_CERTIFICATESRESOLVERS_TLSCHALLENGE_ACME_CASERVER: https://acme-staging-v02.api.letsencrypt.org/directory
         labels:
             io.balena.features.balena-socket: true
             traefik.enable: true
             traefik.http.routers.traefik.entrypoints: https
-            traefik.http.routers.traefik.tls.certresolver: cloudflare
+            traefik.http.routers.traefik.tls.certresolver: tlschallenge
             traefik.http.routers.traefik.middlewares: secureheaders, basicauth
             traefik.http.routers.traefik.service: api@internal
             traefik.http.routers.http.entrypoints: http
@@ -98,72 +98,20 @@ services:
             traefik.http.middlewares.secureheaders.headers.customResponseHeaders.X-Robots-Tag: none
             traefik.http.middlewares.secureheaders.headers.customFrameOptionsValue: SAMEORIGIN
             subdomain: traefik
-    
-    # # https://hub.docker.com/r/pihole/pihole
-    # pihole:
-    #     image: pihole/pihole:4.3.2-1_aarch64
-    #     volumes:
-    #         - 'pihole:/etc/pihole'
-    #         - 'dnsmasq:/etc/dnsmasq.d'
-    #     dns:
-    #         - '127.0.0.1'
-    #         - '1.1.1.1'
-    #     labels:
-    #         traefik.enable: true
-    #         traefik.tcp.routers.pihole.entrypoints: http, dns, dhcp
-    #         traefik.tcp.routers.pihole.rule: HostSNI(`*`)
-    #         traefik.udp.routers.pihole.entrypoints: dns
-    #         traefik.udp.routers.pihole.rule: HostSNI(`*`)
 
-    # # https://hub.docker.com/_/nextcloud/
-    # nextcloud:
-    #     image: nextcloud:17.0.0-apache
-    #     volumes:
-    #         - 'nextcloud:/var/www/html'
-    #     labels:
-    #         traefik.enable: true
-    #         traefik.http.routers.nextcloud.entrypoints: https
-    #         traefik.http.routers.nextcloud.tls.certresolver: cloudflare
-    #         traefik.http.routers.nextcloud.middlewares: secureheaders, cardcaldav
-    #         traefik.http.middlewares.cardcaldav.replacepathregex.regex: ^/.well-known/(card|cal)dav
-    #         traefik.http.middlewares.cardcaldav.replacepathregex.replacement: /remote.php/dav/
-    #         subdomain: nextcloud
-
-    # # https://hub.docker.com/_/mariadb/
-    # mariadb:
-    #     image: mariadb:10.4.8-bionic
-    #     volumes:
-    #         - 'mariadb:/var/lib/mysql'
-    #     environment:
-    #         MYSQL_RANDOM_ROOT_PASSWORD: yes
-
-    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5053 to use unbound for upstream DNS
-    # unbound:
-    #     image: klutchell/unbound:arm64v8-1.9.3
-    #     ports:
-    #         - '5053:5053/tcp'
-    #         - '5053:5053/udp'
-
-    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5153 to use cloudflared for upstream DNS
-    # cloudflared:
-    #     image: klutchell/cloudflared:arm64v8-2019.9.1
-    #     ports:
-    #         - '5153:5053/tcp'
-    #         - '5153:5053/udp'
-
-    # # set pihole DNS1 and DNS2 service variables to 127.0.0.1#5253 to use dnscrypt-proxy for upstream DNS
-    # dnscrypt-proxy:
-    #     image: klutchell/dnscrypt-proxy:arm64v8-2.0.28
-    #     ports:
-    #         - '5253:5053/tcp'
-    #         - '5253:5053/udp'
+    # https://hub.docker.com/r/containous/whoami
+    whoami:
+        image: containous/whoami:latest
+        labels:
+            traefik.enable: true
+            traefik.http.routers.whoami.entrypoints: https
+            traefik.http.routers.whoami.tls.certresolver: tlschallenge
+            traefik.http.routers.whoami.middlewares: secureheaders, basicauth
+            subdomain: whoami
 
 volumes:
     duplicati:
     raneto:
     smokeping:
     traefik:
-    # pihole:
-    # dnsmasq:
-    # nextcloud:
-    # mariadb:
+    ghost:
